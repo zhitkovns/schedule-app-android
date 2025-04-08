@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">SpbpuSchedule</string>
+    <string name="enter_teacher_name">Введите ФИО преподавателя</string>
+    <string name="teacher_name_hint">Иванов Иван Иванович</string>
+    <string name="continue_button">Продолжить</string>
+    <string name="continue_button_desc">Подтвердить ввод ФИО преподавателя</string>
 </resources>
