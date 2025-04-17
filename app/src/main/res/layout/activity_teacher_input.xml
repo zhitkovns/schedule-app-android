@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Простая версия без Material Components -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Введите ФИО преподавателя"
+        android:textSize="20sp"
+        android:layout_marginBottom="24dp"/>
+
+    <EditText
+        android:id="@+id/etTeacherName"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:minHeight="56dp"
+        android:hint="Иванов Иван Иванович"
+        android:inputType="textCapWords|textPersonName"
+        android:imeOptions="actionDone"
+        android:imeActionLabel="Готово"
+        android:importantForAutofill="no"
+        android:textLocale="ru-RU"
+        android:background="@drawable/edittext_background"/>
+
+    <Button
+        android:id="@+id/btnContinue"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:text="Продолжить"/>
+</LinearLayout>

@@ -1,0 +1,29 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Выберите вашу роль"
+        android:textSize="20sp"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btnStudent"
+        style="@style/AppButtonStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Студент"
+        android:layout_margin="16dp"/>
+
+    <Button
+        android:id="@+id/btnTeacher"
+        style="@style/AppButtonStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Преподаватель"/>
+</LinearLayout>

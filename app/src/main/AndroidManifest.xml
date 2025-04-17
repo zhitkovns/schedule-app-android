@@ -1,28 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.spbpu.schedule">
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
+        android:usesCleartextTraffic="true"
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SpbpuSchedule"
         tools:targetApi="31">
+
+        <!-- Главная активность выбора роли -->
         <activity
-            android:name=".presentation.MainActivity"
+            android:name=".presentation.activities.RoleSelectionActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.SpbpuSchedule">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".presentation.activities.TeacherInputActivity"
+            android:windowSoftInputMode="stateVisible|adjustResize"
+            android:configChanges="keyboard|keyboardHidden|locale|layoutDirection">
+        </activity>
+        <!-- Дополнительные активности БЕЗ intent-filter -->
+        <activity android:name=".presentation.activities.GroupSelectionActivity" />
+        <activity android:name=".presentation.activities.MainActivity" />
     </application>
-
 </manifest>
