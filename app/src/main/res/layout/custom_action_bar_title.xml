@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal">
+
+    <!-- Первая строка -->
+    <TextView
+        android:id="@+id/title_line1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Расписание преподавателя"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:gravity="center"/>
+
+    <!-- Вторая строка (ФИО) -->
+    <TextView
+        android:id="@+id/title_line2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:gravity="center"/>
+</LinearLayout>

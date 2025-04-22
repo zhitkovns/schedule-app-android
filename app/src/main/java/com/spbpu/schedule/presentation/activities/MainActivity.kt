@@ -6,6 +6,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.spbpu.schedule.R
+import android.widget.TextView
+import androidx.appcompat.app.ActionBar
+import android.view.Gravity
+import android.view.ViewGroup
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,8 +24,24 @@ class MainActivity : AppCompatActivity() {
                 supportActionBar?.title = "Расписание группы $group"
             }
             "TEACHER" -> {
-                val teacherName = intent.getStringExtra("TEACHER_NAME")
-                supportActionBar?.title = "Расписание преподавателя $teacherName"
+                supportActionBar?.setDisplayShowCustomEnabled(true)
+                supportActionBar?.setDisplayShowTitleEnabled(false)
+
+                val teacherName = intent.getStringExtra("TEACHER_NAME") ?: "Неизвестный преподаватель"
+                val customView = layoutInflater.inflate(R.layout.custom_action_bar_title, null).apply {
+                    layoutParams = ActionBar.LayoutParams(
+                        ActionBar.LayoutParams.MATCH_PARENT,
+                        ActionBar.LayoutParams.WRAP_CONTENT
+                    )
+                }
+
+                val titleLine1 = customView.findViewById<TextView>(R.id.title_line1)
+                val titleLine2 = customView.findViewById<TextView>(R.id.title_line2)
+
+                titleLine1.text = "Расписание преподавателя"
+                titleLine2.text = teacherName
+
+                supportActionBar?.customView = customView
             }
         }
 
