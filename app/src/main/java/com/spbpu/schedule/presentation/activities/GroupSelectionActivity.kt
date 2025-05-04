@@ -3,35 +3,35 @@ package com.spbpu.schedule.presentation.activities
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
-import androidx.activity.viewModels
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import com.spbpu.schedule.data.repositories.GroupRepository
+import com.spbpu.schedule.R
+import com.spbpu.schedule.data.api.RetrofitClient
+import com.spbpu.schedule.data.parsers.GroupParser
+import com.spbpu.schedule.data.models.Group
 import com.spbpu.schedule.databinding.ActivityGroupSelectionBinding
-import com.spbpu.schedule.presentation.factories.GroupViewModelFactory
-import com.spbpu.schedule.presentation.viewmodels.GroupViewModel
+import kotlinx.coroutines.*
 
 class GroupSelectionActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityGroupSelectionBinding
+    private var groupList: List<Group> = emptyList()
     private lateinit var adapter: ArrayAdapter<String>
-
-    private val viewModel: GroupViewModel by viewModels {
-        GroupViewModelFactory(GroupRepository())
-    }
+    private val job = Job()
+    private val uiScope = CoroutineScope(Dispatchers.Main + job)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityGroupSelectionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupSearchView()
+        setupSearch()
         loadGroups()
     }
 
-    private fun setupSearchView() {
-        // слушаем ввод и фильтруем ArrayAdapter
-        binding.searchViewGroups.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+    private fun setupSearch() {
+        binding.searchViewGroups.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) = false
             override fun onQueryTextChange(newText: String?): Boolean {
                 if (::adapter.isInitialized) {
@@ -43,29 +43,44 @@ class GroupSelectionActivity : AppCompatActivity() {
     }
 
     private fun loadGroups() {
-        viewModel.loadGroups(
-            onSuccess = { groups: List<String> ->
-                // groups — это список имен групп
-                adapter = ArrayAdapter(
-                    this,
-                    android.R.layout.simple_list_item_1,
-                    groups
-                )
-                binding.listViewGroups.adapter = adapter
-
-                // при клике на элемент — открываем MainActivity,
-                // передавая выбранное имя группы
-                binding.listViewGroups.setOnItemClickListener { _, _, position, _ ->
-                    val groupName = adapter.getItem(position)!!
-                    startActivity(
-                        Intent(this, MainActivity::class.java)
-                            .putExtra("GROUP_NAME", groupName)
-                    )
+        uiScope.launch {
+            val html = try {
+                withContext(Dispatchers.IO) {
+                    RetrofitClient.api.getGroups().body().orEmpty()
                 }
-            },
-            onError = {
-                // TODO: сообщить пользователю об ошибке загрузки групп
+            } catch (e: Exception) {
+                Toast.makeText(this@GroupSelectionActivity,
+                    "Ошибка сети при загрузке групп", Toast.LENGTH_SHORT).show()
+                return@launch
             }
-        )
+
+            groupList = try {
+                GroupParser.parse(html)
+            } catch (e: Exception) {
+                emptyList()
+            }
+
+            val names = groupList.map { it.name }
+            adapter = ArrayAdapter(
+                this@GroupSelectionActivity,
+                android.R.layout.simple_list_item_1,
+                names
+            )
+            binding.listViewGroups.adapter = adapter
+
+            binding.listViewGroups.setOnItemClickListener { _, _, pos, _ ->
+                val g = groupList[pos]
+                startActivity(
+                    Intent(this@GroupSelectionActivity, MainActivity::class.java)
+                        .putExtra("GROUP_ID",   g.id)
+                        .putExtra("GROUP_NAME", g.name)
+                )
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 }
