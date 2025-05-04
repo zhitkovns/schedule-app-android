@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -11,13 +12,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="8dp">
 
         <Button
             android:id="@+id/btnPrevWeek"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_margin="4dp"
             android:text="Предыдущая"
             android:contentDescription="Переход на предыдущую неделю"/>
 
@@ -26,6 +28,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_margin="4dp"
             android:text="Текущая"
             android:contentDescription="Переход на текущую неделю"/>
 
@@ -34,10 +37,18 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_margin="4dp"
             android:text="Следующая"
             android:contentDescription="Переход на следующую неделю"/>
     </LinearLayout>
-
+    <TextView
+        android:id="@+id/tvDateRange"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="—"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
     <!-- RecyclerView для расписания -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSchedule"

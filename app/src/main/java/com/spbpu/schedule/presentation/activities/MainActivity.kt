@@ -1,86 +1,132 @@
 package com.spbpu.schedule.presentation.activities
+
 import android.os.Bundle
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.spbpu.schedule.R
-import android.widget.TextView
-import androidx.appcompat.app.ActionBar
-import android.view.Gravity
-import android.view.ViewGroup
+import com.spbpu.schedule.data.models.Day
+import com.spbpu.schedule.data.parsers.ScheduleParser
+import com.spbpu.schedule.data.repositories.ScheduleRepository
+import kotlinx.coroutines.*
+import java.text.SimpleDateFormat
+import java.util.*
+import android.view.View
+
 
 class MainActivity : AppCompatActivity() {
+
+    private var weekOffset = 0
+    private var groupId: Int = -1
+
+    private lateinit var btnPrev: Button
+    private lateinit var btnCurr: Button
+    private lateinit var btnNext: Button
+    private lateinit var tvDateRange: TextView
+    private lateinit var rvSchedule: RecyclerView
+    private lateinit var scheduleAdapter: ScheduleAdapter
+
+    private val job = Job()
+    private val uiScope = CoroutineScope(Dispatchers.Main + job)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val role = intent.getStringExtra("ROLE")
 
-        when (role) {
-            "STUDENT" -> {
-                val group = intent.getStringExtra("GROUP")
-                supportActionBar?.title = "Расписание группы $group"
-            }
-            "TEACHER" -> {
-                supportActionBar?.setDisplayShowCustomEnabled(true)
-                supportActionBar?.setDisplayShowTitleEnabled(false)
+        val teacherName = intent.getStringExtra("TEACHER_NAME")
+        if (teacherName != null) {
+            supportActionBar?.title = "Расписание преподавателя\n$teacherName"
+            // Скрываем кнопки и список, либо показываем пустой экран / лоадер
+            findViewById<View>(R.id.btnPrevWeek).visibility = View.GONE
+            findViewById<View>(R.id.btnCurrentWeek).visibility = View.GONE
+            findViewById<View>(R.id.btnNextWeek).visibility = View.GONE
+            // Можно оставить какой‑нибудь TextView: «В разработке»
+            return
+        }
+        // Читаем ID и имя группы
+        groupId = intent.getIntExtra("GROUP_ID", -1)
+        val groupName = intent.getStringExtra("GROUP_NAME") ?: ""
+        if (groupId < 0) {
+            Toast.makeText(this, "Не передан GROUP_ID", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+        supportActionBar?.title = "Расписание группы $groupName"
 
-                val teacherName = intent.getStringExtra("TEACHER_NAME") ?: "Неизвестный преподаватель"
-                val customView = layoutInflater.inflate(R.layout.custom_action_bar_title, null).apply {
-                    layoutParams = ActionBar.LayoutParams(
-                        ActionBar.LayoutParams.MATCH_PARENT,
-                        ActionBar.LayoutParams.WRAP_CONTENT
-                    )
+        // findViewById
+        btnPrev     = findViewById(R.id.btnPrevWeek)
+        btnCurr     = findViewById(R.id.btnCurrentWeek)
+        btnNext     = findViewById(R.id.btnNextWeek)
+        tvDateRange = findViewById(R.id.tvDateRange)
+        rvSchedule  = findViewById(R.id.rvSchedule)
+
+        // RecyclerView
+        scheduleAdapter = ScheduleAdapter(emptyList())
+        rvSchedule.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter       = scheduleAdapter
+        }
+
+        // Кнопки
+        btnPrev.setOnClickListener { changeWeek(-1) }
+        btnCurr.setOnClickListener { changeWeek(0) }
+        btnNext.setOnClickListener { changeWeek(+1) }
+
+        loadSchedule()
+    }
+
+    private fun changeWeek(delta: Int) {
+             // если delta == 0 — сброс на текущую, иначе накапливаем
+             weekOffset = if (delta == 0) 0 else weekOffset + delta
+             loadSchedule()
+         }
+
+    private fun loadSchedule() {
+        // 1) Понедельник недели
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+            add(Calendar.WEEK_OF_YEAR, weekOffset)
+        }
+        // 2) Диапазон dd.MM – dd.MM
+        val fmtShort = SimpleDateFormat("dd.MM", Locale.getDefault())
+        val start = fmtShort.format(cal.time)
+        val endCal = Calendar.getInstance().apply {
+            time = cal.time
+            add(Calendar.DAY_OF_YEAR, 6)
+        }
+        val end = fmtShort.format(endCal.time)
+        tvDateRange.text = "$start – $end"
+
+        // 3) Параметр для API yyyy-MM-dd
+        val fmtApi = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dateParam = fmtApi.format(cal.time)
+
+        // 4) Запрос
+        uiScope.launch {
+            val html = try {
+                withContext(Dispatchers.IO) {
+                    ScheduleRepository().fetchSchedule(groupId, dateParam).body().orEmpty()
                 }
-
-                val titleLine1 = customView.findViewById<TextView>(R.id.title_line1)
-                val titleLine2 = customView.findViewById<TextView>(R.id.title_line2)
-
-                titleLine1.text = "Расписание преподавателя"
-                titleLine2.text = teacherName
-
-                supportActionBar?.customView = customView
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity,
+                    "Ошибка сети при загрузке расписания", Toast.LENGTH_SHORT).show()
+                return@launch
             }
+
+            val days: List<Day> = try {
+                ScheduleParser.parse(html, groupId)
+            } catch (e: Exception) {
+                emptyList()
+            }
+            scheduleAdapter.update(days)
         }
-
-        // 1. Инициализация кнопок
-        findViewById<Button>(R.id.btnPrevWeek).setOnClickListener {
-            Toast.makeText(this, "Предыдущая неделя", Toast.LENGTH_SHORT).show()
-        }
-
-        findViewById<Button>(R.id.btnNextWeek).setOnClickListener {
-            Toast.makeText(this, "Следующая неделя", Toast.LENGTH_SHORT).show()
-        }
-
-        // 2. Настройка RecyclerView
-        val rvSchedule = findViewById<RecyclerView>(R.id.rvSchedule)
-        rvSchedule.layoutManager = LinearLayoutManager(this)
-
-        // Временные данные для примера
-        val days = listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота")
-        rvSchedule.adapter = DayAdapter(days)
-    }
-}
-
-// Простой адаптер для теста
-class DayAdapter(private val days: List<String>) :
-    RecyclerView.Adapter<DayAdapter.DayViewHolder>() {
-
-    class DayViewHolder(view: android.view.View) : RecyclerView.ViewHolder(view) {
-        val tvDayName: android.widget.TextView = view.findViewById(R.id.tvDayName)
     }
 
-    override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): DayViewHolder {
-        val view = android.view.LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_day, parent, false)
-        return DayViewHolder(view)
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
-
-    override fun onBindViewHolder(holder: DayViewHolder, position: Int) {
-        holder.tvDayName.text = days[position]
-    }
-
-    override fun getItemCount() = days.size
 }
