@@ -49,6 +49,15 @@
         android:gravity="center"
         android:textStyle="bold"
         android:layout_marginBottom="8dp"/>
+    <TextView
+        android:id="@+id/tvEmptySchedule"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="На этой неделе нет занятий"
+        android:gravity="center"
+        android:textStyle="italic"
+        android:visibility="gone"
+        android:layout_marginBottom="8dp"/>
     <!-- RecyclerView для расписания -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSchedule"
