@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/tvLessonTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="08:00–09:40"
+        android:textStyle="bold"
+        android:layout_marginEnd="8dp"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvLessonSubject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Предмет (Пр)"
+            android:textSize="14sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/tvLessonInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Кузнецов А. – ауд. 415"
+            android:textSize="12sp"
+            android:textColor="#666"/>
+    </LinearLayout>
+</LinearLayout>

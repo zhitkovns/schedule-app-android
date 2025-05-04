@@ -15,12 +15,13 @@ import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
 import android.view.View
-
+import kotlinx.coroutines.CancellationException
 
 class MainActivity : AppCompatActivity() {
 
     private var weekOffset = 0
     private var groupId: Int = -1
+    private lateinit var tvEmptySchedule: TextView
 
     private lateinit var btnPrev: Button
     private lateinit var btnCurr: Button
@@ -31,6 +32,7 @@ class MainActivity : AppCompatActivity() {
 
     private val job = Job()
     private val uiScope = CoroutineScope(Dispatchers.Main + job)
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,9 +64,11 @@ class MainActivity : AppCompatActivity() {
         btnNext     = findViewById(R.id.btnNextWeek)
         tvDateRange = findViewById(R.id.tvDateRange)
         rvSchedule  = findViewById(R.id.rvSchedule)
+        tvEmptySchedule = findViewById(R.id.tvEmptySchedule)
 
         // RecyclerView
         scheduleAdapter = ScheduleAdapter(emptyList())
+
         rvSchedule.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter       = scheduleAdapter
@@ -106,22 +110,40 @@ class MainActivity : AppCompatActivity() {
 
         // 4) Запрос
         uiScope.launch {
-            val html = try {
+            val html: String = try {
                 withContext(Dispatchers.IO) {
-                    ScheduleRepository().fetchSchedule(groupId, dateParam).body().orEmpty()
+                    ScheduleRepository()
+                        .fetchSchedule(groupId, dateParam)
+                        .body()
+                        .orEmpty()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@MainActivity,
-                    "Ошибка сети при загрузке расписания", Toast.LENGTH_SHORT).show()
+                // Если это отмена корутины — просто уходим, без тоста
+                if (e is CancellationException) throw e
+                // Иначе — реальная сетевая ошибка
+                Toast.makeText(
+                    this@MainActivity,
+                    "Ошибка сети при загрузке расписания",
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@launch
             }
 
-            val days: List<Day> = try {
+            // Парсим дни (парсер сам возвращает пустой список, если JSON не найден)
+            val days = try {
                 ScheduleParser.parse(html, groupId)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
+
+            // Обновляем экран
             scheduleAdapter.update(days)
+            withContext(Dispatchers.Main) {
+                scheduleAdapter.update(days)
+                tvEmptySchedule.visibility =
+                    if (days.isEmpty()) View.VISIBLE else View.GONE
+            }
+
         }
     }
 
