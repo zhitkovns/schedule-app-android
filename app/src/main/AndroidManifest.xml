@@ -2,18 +2,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.spbpu.schedule">
+
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
+
     <application
-        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SpbpuSchedule"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
-
+        <activity
+            android:name=".presentation.activities.ScheduleActivity"
+            android:exported="false" />
         <!-- Главная активность выбора роли -->
         <activity
             android:name=".presentation.activities.RoleSelectionActivity"
@@ -21,16 +25,18 @@
             android:theme="@style/Theme.SpbpuSchedule">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".presentation.activities.TeacherInputActivity"
-            android:windowSoftInputMode="stateVisible|adjustResize"
-            android:configChanges="keyboard|keyboardHidden|locale|layoutDirection">
-        </activity>
-        <!-- Дополнительные активности БЕЗ intent-filter -->
+            android:configChanges="keyboard|keyboardHidden|locale|layoutDirection"
+            android:windowSoftInputMode="stateVisible|adjustResize" /> <!-- Дополнительные активности БЕЗ intent-filter -->
         <activity android:name=".presentation.activities.GroupSelectionActivity" />
+        <activity android:name=".presentation.activities.TeacherScheduleActivity" />
+
         <activity android:name=".presentation.activities.MainActivity" />
     </application>
+
 </manifest>

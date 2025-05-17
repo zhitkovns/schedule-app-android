@@ -6,10 +6,9 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import com.spbpu.schedule.R
-import com.spbpu.schedule.data.api.RetrofitClient
-import com.spbpu.schedule.data.parsers.GroupParser
 import com.spbpu.schedule.data.models.Group
+import com.spbpu.schedule.data.parsers.GroupParser
+import com.spbpu.schedule.data.api.RetrofitClient
 import com.spbpu.schedule.databinding.ActivityGroupSelectionBinding
 import kotlinx.coroutines.*
 
@@ -31,7 +30,7 @@ class GroupSelectionActivity : AppCompatActivity() {
     }
 
     private fun setupSearch() {
-        binding.searchViewGroups.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
+        binding.searchViewGroups.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) = false
             override fun onQueryTextChange(newText: String?): Boolean {
                 if (::adapter.isInitialized) {
@@ -49,8 +48,11 @@ class GroupSelectionActivity : AppCompatActivity() {
                     RetrofitClient.api.getGroups().body().orEmpty()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@GroupSelectionActivity,
-                    "Ошибка сети при загрузке групп", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@GroupSelectionActivity,
+                    "Ошибка сети при загрузке групп",
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@launch
             }
 
@@ -70,11 +72,11 @@ class GroupSelectionActivity : AppCompatActivity() {
 
             binding.listViewGroups.setOnItemClickListener { _, _, pos, _ ->
                 val g = groupList[pos]
-                startActivity(
-                    Intent(this@GroupSelectionActivity, MainActivity::class.java)
-                        .putExtra("GROUP_ID",   g.id)
-                        .putExtra("GROUP_NAME", g.name)
-                )
+                // Переход в расписание
+                val intent = Intent(this@GroupSelectionActivity, ScheduleActivity::class.java)
+                intent.putExtra("GROUP_ID", g.id)
+                intent.putExtra("GROUP_NAME", g.name)
+                startActivity(intent)
             }
         }
     }
