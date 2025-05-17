@@ -3,5 +3,7 @@
     <string name="enter_teacher_name">Введите ФИО преподавателя</string>
     <string name="teacher_name_hint">Иванов Иван Иванович</string>
     <string name="continue_button">Продолжить</string>
+    <string name="schedule_for_group">Расписание для группы %1$s (ID: %2$d)</string>
+
     <string name="continue_button_desc">Подтвердить ввод ФИО преподавателя</string>
 </resources>

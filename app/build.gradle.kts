@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.spbpu.schedule"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -51,6 +51,9 @@ dependencies {
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.cardview:cardview:1.0.0")
+    implementation("com.googlecode.json-simple:json-simple:1.1.1") {
+        exclude(group = "junit", module = "junit")
+    }
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -59,11 +62,18 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.constraintlayout)
+    testImplementation(libs.junit) {
+        exclude(group = "org.hamcrest", module = "hamcrest-core")
+    }
+    androidTestImplementation(libs.androidx.junit) {
+        exclude(group = "org.hamcrest", module = "hamcrest-core")
+    }
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
 }

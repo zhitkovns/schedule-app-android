@@ -1,30 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-
-
-
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
 
     <androidx.appcompat.widget.SearchView
         android:id="@+id/searchViewGroups"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:queryHint="Введите номер группы" />
+        android:queryHint="Введите номер группы"
+        android:layout_marginTop="35dp"/>
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Выберите вашу группу"
-        android:textSize="20sp"
         android:gravity="center"
-        android:padding="50dp"/>
+        android:padding="10dp"
+        android:text="Выберите вашу группу"
+        android:textSize="20sp" />
 
     <ListView
         android:id="@+id/listViewGroups"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 </LinearLayout>

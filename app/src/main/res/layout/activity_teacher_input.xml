@@ -35,4 +35,14 @@
         android:layout_height="48dp"
         android:layout_marginTop="16dp"
         android:text="Продолжить"/>
+
+    <!-- Новый блок: Список преподавателей -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerTeachers"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="24dp"
+        android:scrollbars="vertical"
+        tools:listitem="@layout/item_teacher" />
 </LinearLayout>
