@@ -1,7 +1,7 @@
 package com.spbpu.schedule.RuzApi.models;
 
 import com.spbpu.schedule.RuzApi.RuzSpbStu;
-import org.json.simple.JSONArray;
+
 import org.json.simple.JSONObject;
 //import com.spbpu.schedule.RuzApi.models.Room;
 //import com.spbpu.schedule.RuzApi.models.Building;

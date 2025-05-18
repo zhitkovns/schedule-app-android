@@ -1,7 +1,6 @@
 package com.spbpu.schedule.RuzApi.models;
 
 import org.json.simple.JSONObject;
-
 import java.util.Objects;
 
 public class Building {
@@ -32,15 +31,15 @@ public class Building {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Building building = (Building) o;
-        return getId() == building.getId() &&
-                getName().equals(building.getName()) &&
-                getAbbr().equals(building.getAbbr()) &&
-                getAddress().equals(building.getAddress());
+        return id == building.id &&
+                Objects.equals(name, building.name) &&
+                Objects.equals(abbr, building.abbr) &&
+                Objects.equals(address, building.address);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getAbbr(), getAddress());
+        return Objects.hash(id, name, abbr, address);
     }
 
     public int getId() {
@@ -60,9 +59,11 @@ public class Building {
     }
 
     public static Building parseJSON(JSONObject jsonObject) {
-        return new Building(Integer.parseInt(jsonObject.get("id").toString()),
+        return new Building(
+                Integer.parseInt(jsonObject.get("id").toString()),
                 jsonObject.get("name").toString(),
                 jsonObject.get("abbr").toString(),
-                jsonObject.get("address").toString());
+                jsonObject.get("address").toString()
+        );
     }
 }
