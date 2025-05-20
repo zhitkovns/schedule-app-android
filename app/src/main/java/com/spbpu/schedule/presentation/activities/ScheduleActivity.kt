@@ -11,9 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.spbpu.schedule.R
 import com.spbpu.schedule.RuzApi.RuzSpbStu
-import com.spbpu.schedule.RuzApi.models.Day
-import com.spbpu.schedule.presentation.activities.ScheduleAdapter1
-import com.spbpu.schedule.RuzApi.models.DaySchedule
+import com.spbpu.schedule.RuzApi.models.*
 import kotlinx.coroutines.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -21,13 +19,14 @@ import java.time.format.TextStyle
 import java.util.Locale
 import android.widget.Button
 import android.widget.TextView
-import kotlinx.coroutines.*
 
 class ScheduleActivity : AppCompatActivity() {
 
     private var groupId: Int = -1
     private var currentDate: LocalDate = LocalDate.now()
     private var originalSchedule: List<DaySchedule> = emptyList()
+    private var currentAuditory: Pair<String, String>? = null // Pair<BuildingName, RoomName>
+    private var currentBuildingId: Int? = null
 
     private lateinit var scheduleText: TextView
     private lateinit var recyclerView: RecyclerView
@@ -45,7 +44,7 @@ class ScheduleActivity : AppCompatActivity() {
         emptyScheduleText = findViewById(R.id.tvEmptySchedule)
         recyclerView = findViewById(R.id.recyclerSchedule)
 
-        scheduleText.text = "                   Расписание для группы: \n                          $groupName"
+        updateTitle(groupName)
         emptyScheduleText.visibility = View.GONE
 
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -74,17 +73,42 @@ class ScheduleActivity : AppCompatActivity() {
         loadSchedule()
     }
 
+    private fun updateTitle(groupName: String) {
+        scheduleText.text = currentAuditory?.let {
+            "                   Расписание аудитории: \n" +
+                    "                  ${it.first} ${it.second}"
+        } ?: "                     Расписание группы: \n                        $groupName"
+    }
+
     private fun loadSchedule() {
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val schedule = withContext(Dispatchers.IO) {
+                val progressDialog = ProgressDialog(this@ScheduleActivity).apply {
+                    setMessage("Загрузка расписания...")
+                    setCancelable(false)
+                    show()
+                }
+
+                val groupName = intent.getStringExtra("GROUP_NAME") ?: "Неизвестно"
+                updateTitle(groupName)
+
+                val schedule = currentAuditory?.let { (buildingName, roomName) ->
+                    withContext(Dispatchers.IO) {
+                        RuzSpbStu.getScheduleByBuildingAndRoom(buildingName, roomName, currentDate)
+                    }
+                } ?: withContext(Dispatchers.IO) {
                     RuzSpbStu.getScheduleByGroupIdAndDate(groupId, currentDate)
                 }
 
-                if (schedule == null || schedule.days == null || schedule.days.isEmpty()) {
+                progressDialog.dismiss()
+
+                if (schedule == null || schedule.days.isNullOrEmpty()) {
                     showEmptySchedule(true)
-                    Toast.makeText(this@ScheduleActivity,
-                        "Нет расписания", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@ScheduleActivity,
+                        "Нет занятий на выбранной неделе",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@launch
                 }
 
@@ -95,27 +119,32 @@ class ScheduleActivity : AppCompatActivity() {
                         DateTimeFormatter.ofPattern("dd.MM"))
                     val lessonsText = day.lessons.joinToString("\n────────────\n") { lesson ->
                         val room = lesson.auditories?.rooms?.firstOrNull()?.name ?: "Аудитория не указана"
-                        Log.d("ScheduleActivity", "Rooms count for lesson '${lesson.subject}': ${lesson.auditories?.rooms?.size}")
-
                         val building = lesson.auditories?.building
-                        val buildingInfo = building?.let { "${it.name} (Аудитория:${room})" } ?: "Корпус не указан"
+                        val buildingInfo = building?.let { "${it.name} ($room)" } ?: "Корпус не указан"
                         val start = lesson.timeStart?.toString() ?: "??"
                         val end = lesson.timeEnd?.toString() ?: "??"
-                        val teacherNames = lesson.teachers?.joinToString { it.fullName } ?: "Преподаватель не указан"
-                        "- ${lesson.subject} ($start - $end)\n$teacherNames\n$buildingInfo"
+                        val teachers = lesson.teachers?.joinToString { it.fullName } ?: "Преподаватель не указан"
+                        val groups = lesson.groups?.joinToString { it.nameGroup } ?: "Группа не указана"
+
+                        """
+                    - ${lesson.subject} ($start - $end)
+                    Преподаватель: $teachers
+                    Группы: $groups
+                    $buildingInfo
+                    """.trimIndent()
                     }
                     DaySchedule("$weekday, $formattedDate", lessons = lessonsText)
                 }
 
-                originalSchedule = daySchedules
+                if (currentAuditory == null) {
+                    originalSchedule = daySchedules
+                }
+
                 showEmptySchedule(daySchedules.isEmpty())
                 adapter.updateItems(daySchedules)
 
             } catch (e: Exception) {
-                Log.e("ScheduleActivity", "Ошибка при загрузке расписания", e)
-                Toast.makeText(this@ScheduleActivity,
-                    "Ошибка при загрузке расписания", Toast.LENGTH_LONG).show()
-                showEmptySchedule(false)
+                ///
             }
         }
     }
@@ -144,15 +173,11 @@ class ScheduleActivity : AppCompatActivity() {
                     .setTitle("Выберите корпус")
                     .setItems(buildingNames.toTypedArray()) { _, which ->
                         when (which) {
-                            0 -> {
-                                adapter.updateItems(originalSchedule)
-                                showEmptySchedule(originalSchedule.isEmpty())
-                                Toast.makeText(this@ScheduleActivity,
-                                    "Фильтр сброшен", Toast.LENGTH_SHORT).show()
-                            }
+                            0 -> resetFilter()
                             else -> {
                                 val selectedBuilding = buildings[which - 1]
-                                showRoomsInBuilding(selectedBuilding.id)
+                                currentBuildingId = selectedBuilding.id
+                                showRoomsInBuilding(selectedBuilding)
                             }
                         }
                     }
@@ -160,14 +185,17 @@ class ScheduleActivity : AppCompatActivity() {
                     .show()
 
             } catch (e: Exception) {
-                Toast.makeText(this@ScheduleActivity,
-                    "Ошибка при загрузке корпусов", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@ScheduleActivity,
+                    "Ошибка при загрузке корпусов",
+                    Toast.LENGTH_SHORT
+                ).show()
                 Log.e("ScheduleFilter", "Ошибка загрузки корпусов", e)
             }
         }
     }
 
-    private fun showRoomsInBuilding(buildingId: Int) {
+    private fun showRoomsInBuilding(building: Building) {
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 val progressDialog = ProgressDialog(this@ScheduleActivity).apply {
@@ -177,7 +205,7 @@ class ScheduleActivity : AppCompatActivity() {
                 }
 
                 val auditory = withContext(Dispatchers.IO) {
-                    RuzSpbStu.getAuditoriesByBuildingId(buildingId)
+                    RuzSpbStu.getAuditoriesByBuildingId(building.id)
                 }
 
                 progressDialog.dismiss()
@@ -185,52 +213,46 @@ class ScheduleActivity : AppCompatActivity() {
                 val rooms = auditory?.rooms?.sortedBy { it.name } ?: emptyList()
 
                 if (rooms.isEmpty()) {
-                    Toast.makeText(this@ScheduleActivity,
-                        "В этом корпусе нет аудиторий", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ScheduleActivity,
+                        "В корпусе ${building.name} нет аудиторий",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@launch
                 }
 
                 AlertDialog.Builder(this@ScheduleActivity)
-                    .setTitle("Выберите аудиторию")
+                    .setTitle("Аудитории в корпусе ${building.name}")
                     .setItems(rooms.map { it.name }.toTypedArray()) { _, which ->
                         val selectedRoom = rooms[which]
-                        filterByAuditory(selectedRoom.name)
+                        currentAuditory = Pair(building.name, selectedRoom.name)
+                        loadSchedule()
                     }
                     .setNegativeButton("Назад") { _, _ -> showBuildingSelectionDialog() }
                     .show()
 
             } catch (e: Exception) {
-                Toast.makeText(this@ScheduleActivity,
-                    "Ошибка при загрузке аудиторий", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@ScheduleActivity,
+                    "Ошибка при загрузке аудиторий",
+                    Toast.LENGTH_SHORT
+                ).show()
                 Log.e("ScheduleFilter", "Ошибка загрузки аудиторий", e)
             }
         }
     }
 
-    private fun filterByAuditory(auditoryName: String) {
-        val filtered = originalSchedule.mapNotNull { day ->
-            val filteredLessons = day.lessons.split("\n────────────\n")
-                .filter { lesson ->
-                    lesson.contains("($auditoryName)") ||
-                            lesson.contains("Аудитория:$auditoryName") ||
-                            lesson.contains(" $auditoryName ")
-                }
-                .joinToString("\n────────────\n")
-
-            if (filteredLessons.isNotBlank()) {
-                day.copy(lessons = filteredLessons)
-            } else {
-                null
-            }
-        }
-
-        if (filtered.isEmpty()) {
-            showEmptySchedule(true)
-            Toast.makeText(this, "Нет занятий в выбранной аудитории", Toast.LENGTH_SHORT).show()
-        } else {
-            showEmptySchedule(false)
-            adapter.updateItems(filtered)
-        }
+    private fun resetFilter() {
+        currentAuditory = null
+        currentBuildingId = null
+        currentDate = LocalDate.now()
+        updateTitle(intent.getStringExtra("GROUP_NAME") ?: "Неизвестно")
+        loadSchedule()
+        Toast.makeText(
+            this@ScheduleActivity,
+            "Фильтр сброшен",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     private fun showEmptySchedule(show: Boolean) {

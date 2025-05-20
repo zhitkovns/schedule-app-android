@@ -409,11 +409,37 @@ public class RuzSpbStu {
         }
     }
 
-    public static Schedule getScheduleByAuditoryIdAndDate(int id, LocalDate date) {
+    public static Integer findAuditoryIdByName(String auditoryName) {
+        ArrayList<Building> buildings = getBuildings();
+        for (Building building : Objects.requireNonNull(buildings)) {
+            Auditory auditory = getAuditoriesByBuildingId(building.getId());
+            if (auditory != null) {
+                for (Room room : Objects.requireNonNull(auditory.getRooms())) {
+                    if (room.getName().equalsIgnoreCase(auditoryName)) {
+                        return room.getId();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    public static Schedule getScheduleByAuditoryName(String auditoryName, LocalDate date) {
         try {
-            JSONObject jsonObject = request(LINK + "buildings/" +
-                    findBuildingByAuditoryId(id) + "/rooms/" + id + "/scheduler?date=" +
-                    date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            Integer auditoryId = findAuditoryIdByName(auditoryName);
+            if (auditoryId == null) {
+                throw new RuzApiException("Аудитория не найдена");
+            }
+
+            Building building = findBuildingByAuditoryId(auditoryId);
+            if (building == null) {
+                throw new RuzApiException("Корпус не найден");
+            }
+
+            String url = LINK + "buildings/" + building.getId() +
+                    "/rooms/" + auditoryId + "/scheduler?date=" +
+                    date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+            JSONObject jsonObject = request(url);
             if (Objects.requireNonNull(jsonObject).get("error") == null) {
                 return Schedule.parseJSON(jsonObject);
             } else {
@@ -421,6 +447,64 @@ public class RuzSpbStu {
             }
         } catch (RuzApiException ruzApiException) {
             ruzApiException.printStackTrace();
+            return null;
+        }
+    }
+
+    public static Schedule getScheduleByBuildingAndRoom(String buildingName, String roomName, LocalDate date) {
+        try {
+            // 1. Получаем список всех корпусов
+            ArrayList<Building> buildings = getBuildings();
+            if (buildings == null) return null;
+
+            // 2. Ищем нужный корпус
+            Building targetBuilding = null;
+            for (Building building : buildings) {
+                if (building.getName().equalsIgnoreCase(buildingName)) {
+                    targetBuilding = building;
+                    break;
+                }
+            }
+            if (targetBuilding == null) return null;
+
+            // 3. Получаем аудитории в корпусе
+            Auditory auditory = getAuditoriesByBuildingId(targetBuilding.getId());
+            if (auditory == null) return null;
+
+            // 4. Ищем нужную аудиторию
+            Room targetRoom = null;
+            for (Room room : auditory.getRooms()) {
+                if (room.getName().equalsIgnoreCase(roomName)) {
+                    targetRoom = room;
+                    break;
+                }
+            }
+            if (targetRoom == null) return null;
+
+            // 5. Получаем расписание для аудитории
+            return getScheduleByAuditoryIdAndDate(targetRoom.getId(), date);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static Schedule getScheduleByAuditoryIdAndDate(int auditoryId, LocalDate date) {
+        try {
+            Building building = findBuildingByAuditoryId(auditoryId);
+            if (building == null) return null;
+
+            String url = LINK + "buildings/" + building.getId() +
+                    "/rooms/" + auditoryId + "/scheduler?date=" +
+                    date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+            JSONObject jsonObject = request(url);
+            if (jsonObject == null || jsonObject.get("error") != null) {
+                return null;
+            }
+            return Schedule.parseJSON(jsonObject);
+        } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
