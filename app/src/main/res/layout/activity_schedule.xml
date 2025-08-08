@@ -13,36 +13,61 @@
         android:textSize="18sp"
         android:textStyle="bold"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="10dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="2dp">
 
         <Button
             android:id="@+id/btnPrevWeek"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:text="← Пред. неделя" />
 
-        <Space
-            android:layout_width="24dp"
-            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btnCurrentWeek"
+            android:layout_width="115dp"
+            android:layout_height="55dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text="Текущая неделя" />
 
         <Button
             android:id="@+id/btnNextWeek"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="След. неделя →" />
+            android:text="След. → неделя" />
     </LinearLayout>
+
+    <!-- Новая кнопка фильтра под предыдущим LinearLayout -->
+
+    <Button
+        android:id="@+id/btnFilterAudience"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="12dp"
+        android:text="Фильтр по аудиториям" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerSchedule"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
+
+    <TextView
+        android:id="@+id/tvEmptySchedule"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Занятий на неделе нет. Можете отдыхать!"
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        android:gravity="center"
+        android:padding="16dp"
+        android:visibility="gone"/>
 
 </LinearLayout>

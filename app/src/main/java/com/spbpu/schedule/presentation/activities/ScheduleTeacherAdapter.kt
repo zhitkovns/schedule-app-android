@@ -30,8 +30,10 @@ class ScheduleTeacherAdapter(
     }
 
     override fun getItemCount(): Int = items.size
-
+    var originalItems: List<DaySchedule> = items
+        private set
     fun updateItems(newItems: List<DaySchedule>) {
+        originalItems = newItems
         items = newItems
         notifyDataSetChanged()
     }
